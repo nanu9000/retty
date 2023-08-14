@@ -42,6 +42,7 @@ fn handle_connection(mut connection: TcpStream) -> Result<()> {
 
     loop {
         let num_bytes = connection.write(&response[bytes_written..min(bytes_written + 5, response_bytes)])?;
+        // let num_bytes = connection.write(&response[bytes_written..])?;
         bytes_written += num_bytes;
         println!("wrote {num_bytes} bytes, {bytes_written}/{response_bytes}");
 
