@@ -1,3 +1,5 @@
+use log::{debug, info, error};
+
 use std::cmp::min;
 use std::io::{Read, Result, Write};
 use std::net::{TcpListener, TcpStream};
@@ -7,7 +9,7 @@ fn handle_connection(mut connection: TcpStream) -> Result<()> {
     let mut request = [0u8; 1024];
 
     // Read request
-    println!("reading from connection");
+    info!("reading from connection");
     loop {
         let num_bytes = Read::by_ref(&mut connection).take(5).read(&mut request[bytes_read..])?;
         // let num_bytes = connection.read(&mut request[bytes_read..])?;
@@ -15,7 +17,7 @@ fn handle_connection(mut connection: TcpStream) -> Result<()> {
         bytes_read += num_bytes;
 
         if num_bytes == 0 {
-            println!("client disconnected unexpectedly while reading request");
+            error!("client disconnected unexpectedly while reading request");
             return Ok(());
         }
 
@@ -25,12 +27,11 @@ fn handle_connection(mut connection: TcpStream) -> Result<()> {
     }
 
     let request = String::from_utf8_lossy(&request[..bytes_read]);
-    // TODO Use an actual logging library
-    println!("DEBUG finished reading request: {request}");
+    debug!("finished reading request: {request}");
 
     // TODO Base the response off the input provided
     // Write response
-    println!("writing to connection");
+    info!("writing to connection");
     let response = concat!(
         "HTTP/1.1 200 OK\r\n",
         "Content-Length: 12\n",
@@ -45,10 +46,10 @@ fn handle_connection(mut connection: TcpStream) -> Result<()> {
         let num_bytes = connection.write(&response[bytes_written..min(bytes_written + 5, response_bytes)])?;
         // let num_bytes = connection.write(&response[bytes_written..])?;
         bytes_written += num_bytes;
-        // println!("DEBUG wrote {num_bytes} bytes, {bytes_written}/{response_bytes}");
+        debug!("wrote {num_bytes} bytes, {bytes_written}/{response_bytes}");
 
         if num_bytes == 0 {
-            println!("client disconnected unexpectedly while writing response");
+            error!("client disconnected unexpectedly while writing response");
             return Ok(());
         }
 
@@ -58,7 +59,7 @@ fn handle_connection(mut connection: TcpStream) -> Result<()> {
     }
 
     // Flush response
-    println!("flushing response");
+    info!("flushing response");
     connection.flush()
 }
 
@@ -67,12 +68,12 @@ fn blocking_listener_primitive() {
 
     loop {
         // Primitive blocking TcpListener
-        println!("about to wait to accept connection");
+        info!("about to wait to accept connection");
         let (connection, _) = blocking_listener.accept().unwrap();
-        println!("accepted connection");
+        info!("accepted connection");
 
         if let Err(e) = handle_connection(connection) {
-            println!("failed to handle connection {e}")
+            error!("failed to handle connection {e}")
         }
     }
 }
@@ -82,15 +83,20 @@ fn blocking_listener_spawns_threads() {
 
     loop {
         // Spawning threads for each connection
-        println!("about to wait to accept connection");
+        info!("about to wait to accept connection");
         let (connection, _) = blocking_listener.accept().unwrap();
-        println!("accepted connection");
+        info!("accepted connection");
 
-        std::thread::spawn(|| handle_connection(connection));
+        std::thread::spawn(|| {
+            if let Err(e) = handle_connection(connection) {
+                error!("failed to handle connection {e}")
+            }
+        });
     }
 }
 
 fn main() {
+    env_logger::init();
     // TODO Use a CLI args parser to determine which listener impl to use
     // blocking_listener_primitive();
     blocking_listener_spawns_threads();
