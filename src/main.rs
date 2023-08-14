@@ -91,6 +91,7 @@ fn blocking_listener_spawns_threads() {
 }
 
 fn main() {
-    blocking_listener_primitive();
-    // blocking_listener_spawns_threads();
+    // TODO Use a CLI args parser to determine which listener impl to use
+    // blocking_listener_primitive();
+    blocking_listener_spawns_threads();
 }
