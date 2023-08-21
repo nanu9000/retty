@@ -6,19 +6,19 @@
 #  up for blocking_listener_primitive or blocking_listener_spawns_threads.
 
 sequential_calls() {
-    for i in {1..5}; do
+    for i in {1..50}; do
         curl localhost:3000/$i 2>/dev/null
     done
 }
 
 parallel_calls() {
-    for i in {1..5}; do
+    for i in {1..50}; do
         curl localhost:3000/$i 2>/dev/null &
     done
 }
 
-echo SEQUENTIAL CALLS
-echo $(sequential_calls)
+# echo SEQUENTIAL CALLS
+# echo $(sequential_calls)
 
 echo -e "\n\nPARALLEL CALLS"
 echo $(parallel_calls)
